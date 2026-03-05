@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,6 +47,18 @@ public class EspectaculoController {
     public ResponseEntity<List<DtoEspectaculo>> getEspectaculo(@RequestParam String artist) {
 
         List<DtoEspectaculo> result = this.service.getEspectaculoByArtist(artist);
+
+        if (result.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "No se encontraron espectáculos para el artista especificado.");
+        }
+
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/{escenario}")
+    public ResponseEntity<List<DtoEspectaculo>> getEspectaculoByEscenario(@PathVariable String escenario) {
+        List<DtoEspectaculo> result = this.service.getEspectaculoByEscenario(escenario);
 
         if (result.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,

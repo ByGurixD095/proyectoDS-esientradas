@@ -34,7 +34,11 @@ public class EspectaculoService {
 
     @Transactional(readOnly = true)
     public List<DtoEspectaculo> getEspectaculoByArtist(String artist) {
-        return mapToDtoList(dao.findByArtista(artist));
+        return mapToDtoList(dao.findByArtistaContainingIgnoreCase(artist));
+    }
+
+    public List<DtoEspectaculo> getEspectaculoByEscenario(String escenario) {
+        return mapToDtoList(dao.buscarPorNombreEscenario(escenario));
     }
 
     @Transactional(readOnly = true)
