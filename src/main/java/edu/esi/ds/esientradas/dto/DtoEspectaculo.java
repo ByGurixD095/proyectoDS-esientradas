@@ -2,8 +2,6 @@ package edu.esi.ds.esientradas.dto;
 
 import java.time.LocalDateTime;
 
-import edu.esi.ds.esientradas.model.Escenario;
-
 public class DtoEspectaculo {
 
     private Long id;
@@ -19,8 +17,8 @@ public class DtoEspectaculo {
         this.fecha = fecha;
     }
 
-    public void setEscenario(Escenario escenario) {
-        this.escenario = escenario.getNombre();
+    public void setEscenario(String escenario) {
+        this.escenario = escenario;
     }
 
     public void setId(Long id) {

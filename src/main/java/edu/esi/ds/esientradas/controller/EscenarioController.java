@@ -12,6 +12,7 @@ import edu.esi.ds.esientradas.dto.DtoEscenario;
 import edu.esi.ds.esientradas.service.EscenarioService;
 
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/escenarios")
@@ -24,6 +25,11 @@ public class EscenarioController {
     @GetMapping
     public ResponseEntity<List<DtoEscenario>> getEscenarios() {
         return ResponseEntity.ok(this.service.getEscenarios());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<DtoEscenario> getEscenarios(@PathVariable Long id) {
+        return ResponseEntity.ok(this.service.getEscenarioById(id));
     }
 
 }

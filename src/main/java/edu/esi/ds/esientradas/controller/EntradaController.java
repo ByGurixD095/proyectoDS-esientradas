@@ -5,97 +5,79 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
-import edu.esi.ds.esientradas.dto.CompraRequest;
-import edu.esi.ds.esientradas.dto.CompraResponse;
 import edu.esi.ds.esientradas.dto.DtoEntrada;
 import edu.esi.ds.esientradas.dto.DtoEntradaInfo;
 import edu.esi.ds.esientradas.dto.ReservaResponse;
 import edu.esi.ds.esientradas.service.EntradaService;
 
 @RestController
-@RequestMapping("/entradas")
+@RequestMapping("/espectaculos/{espectaculoId}/entradas")
 @CrossOrigin(origins = "*")
 public class EntradaController {
 
     @Autowired
     EntradaService service;
 
-    @GetMapping("/espectaculos/{espectaculoId}")
-    public ResponseEntity<List<DtoEntrada>> getEntradaByEspectaculoId(@PathVariable Long espectaculoId) {
-        List<DtoEntrada> result = this.service.getEntradasByEspectaculoId(espectaculoId);
-
-        if (result.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "No se encontraron entradas para el espectaculo especificado.");
-        }
-
-        return ResponseEntity.ok(result);
+    // GET /espectaculos/{espectaculoId}/entradas
+    @GetMapping
+    public ResponseEntity<List<DtoEntrada>> getEntradas(@PathVariable Long espectaculoId) {
+        return ResponseEntity.ok(service.getEntradasByEspectaculoId(espectaculoId));
     }
 
-    @GetMapping("/espectaculo/{espectaculoId}/info")
-    public ResponseEntity<DtoEntradaInfo> getEntradaInfo(@PathVariable Long espectaculoId) {
-        return ResponseEntity.ok(this.service.getInfoEntradas(espectaculoId));
+    // GET /espectaculos/{espectaculoId}/entradas/info
+    @GetMapping("/info")
+    public ResponseEntity<DtoEntradaInfo> getInfo(@PathVariable Long espectaculoId) {
+        return ResponseEntity.ok(service.getInfoEntradas(espectaculoId));
     }
 
-    @GetMapping("/espectaculos/{espectaculoId}/cantidad")
-    public ResponseEntity<Integer> getNumeroEntradas(@PathVariable Long espectaculoId) {
-        int entradas = this.service.getNumeroEntradas(espectaculoId);
-
-        if (entradas == 0) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                    "No se encontraron entradas para el espectaculo especificado.");
-        }
-
-        return ResponseEntity.ok(entradas);
+    // GET /espectaculos/{espectaculoId}/entradas/cantidad
+    @GetMapping("/cantidad")
+    public ResponseEntity<Integer> getCantidad(@PathVariable Long espectaculoId) {
+        return ResponseEntity.ok(service.getNumeroEntradas(espectaculoId));
     }
 
+    // GET /espectaculos/{espectaculoId}/entradas/{entradaId}
     @GetMapping("/{entradaId}")
-    public ResponseEntity<DtoEntrada> getEntradaById(@PathVariable Long entradaId) {
-        DtoEntrada result = this.service.getEntradaById(entradaId);
+    public ResponseEntity<DtoEntrada> getEntradaById(
+            @PathVariable Long espectaculoId,
+            @PathVariable Long entradaId) {
+        DtoEntrada result = service.getEntradaById(entradaId);
 
         if (result == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "No se encontró la entrada para el id especificado.");
+                    "No se encontró la entrada especificada.");
         }
 
         return ResponseEntity.ok(result);
     }
 
+    // POST /espectaculos/{espectaculoId}/entradas/{entradaId}/prerreservar
     @PostMapping("/{entradaId}/prerreservar")
-    public ResponseEntity<ReservaResponse> prerreservarEntrada(
+    public ResponseEntity<ReservaResponse> prerreservar(
+            @PathVariable Long espectaculoId,
             @PathVariable Long entradaId,
             @RequestBody ReservaResponse body) {
-
-        return ResponseEntity.ok(this.service.prerreservar(entradaId, body.token()));
+        return ResponseEntity.ok(service.prerreservar(entradaId, body.token()));
     }
 
+    // DELETE
+    // /espectaculos/{espectaculoId}/entradas/{entradaId}/prerreservar/{token}
     @DeleteMapping("/{entradaId}/prerreservar/{token}")
-    public ResponseEntity<Void> cancelarPrerreserva(@PathVariable Long entradaId, @PathVariable String token) {
-        this.service.cancelarPrerreserva(entradaId, token);
-
+    public ResponseEntity<Void> cancelarPrerreserva(
+            @PathVariable Long espectaculoId,
+            @PathVariable Long entradaId,
+            @PathVariable String token) {
+        service.cancelarPrerreserva(entradaId, token);
         return ResponseEntity.noContent().build();
-    }
-
-    // COMPRAR
-    @PostMapping("/comprar")
-    public ResponseEntity<CompraResponse> comprarEntradas(@RequestBody CompraRequest request) {
-        try {
-            return ResponseEntity.ok(this.service.comprar(request.tokenPrerreserva(), request.tokenUsuario()));
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        } catch (IllegalStateException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
-
     }
 }

@@ -25,70 +25,51 @@ public class EspectaculoController {
     @Autowired
     EspectaculoService service;
 
+    // GET /espectaculos
+    // GET /espectaculos?artista=Radiohead
+    // GET /espectaculos?fecha=2026-03-14
+    // GET /espectaculos?escenario=Palacio
+    // GET /espectaculos?escenarioId=3
+    // Todos los filtros son opcionales y se pueden combinar desde el service.
+    // Si no se pasa ningún parámetro, devuelve todos.
+
     @GetMapping
-    public ResponseEntity<List<DtoEspectaculo>> getEspectaculos() {
-        return ResponseEntity.ok(this.service.getEspectaculos());
+    public ResponseEntity<List<DtoEspectaculo>> getEspectaculos(
+            @RequestParam(required = false) String artista,
+            @RequestParam(required = false) LocalDate fecha,
+            @RequestParam(required = false) String escenario,
+            @RequestParam(required = false) Long escenarioId) {
+
+        List<DtoEspectaculo> result;
+
+        if (artista != null) {
+            result = service.getEspectaculoByArtist(artista);
+        } else if (fecha != null) {
+            result = service.getEspectaculoByDate(fecha);
+        } else if (escenarioId != null) {
+            result = service.getEspectaculoByEscenario(escenarioId);
+        } else if (escenario != null) {
+            result = service.getEspectaculoByEscenario(escenario);
+        } else {
+            result = service.getEspectaculos();
+        }
+
+        if (result.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "No se encontraron espectáculos para los filtros especificados.");
+        }
+
+        return ResponseEntity.ok(result);
     }
 
-    @GetMapping(params = "id")
-    public ResponseEntity<DtoEspectaculo> getEspectaculo(@RequestParam Long id) {
-
-        DtoEspectaculo result = this.service.getEspectaculoById(id);
+    // GET /espectaculos/{id}
+    @GetMapping("/{id}")
+    public ResponseEntity<DtoEspectaculo> getEspectaculoById(@PathVariable Long id) {
+        DtoEspectaculo result = service.getEspectaculoById(id);
 
         if (result == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                     "No se encontró ningún espectáculo con el ID especificado.");
-        }
-
-        return ResponseEntity.ok(result);
-    }
-
-    @GetMapping(params = "artist")
-    public ResponseEntity<List<DtoEspectaculo>> getEspectaculo(@RequestParam String artist) {
-
-        List<DtoEspectaculo> result = this.service.getEspectaculoByArtist(artist);
-
-        if (result.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "No se encontraron espectáculos para el artista especificado.");
-        }
-
-        return ResponseEntity.ok(result);
-    }
-
-    @GetMapping("/{escenario}")
-    public ResponseEntity<List<DtoEspectaculo>> getEspectaculoByEscenario(@PathVariable String escenario) {
-        List<DtoEspectaculo> result = this.service.getEspectaculoByEscenario(escenario);
-
-        if (result.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "No se encontraron espectáculos para el artista especificado.");
-        }
-
-        return ResponseEntity.ok(result);
-    }
-
-    @GetMapping(params = "date")
-    public ResponseEntity<List<DtoEspectaculo>> getEspectaculo(@RequestParam LocalDate date) {
-
-        List<DtoEspectaculo> result = this.service.getEspectaculoByDate(date);
-
-        if (result.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "No se encontraron espectáculos para la fecha especificada.");
-        }
-
-        return ResponseEntity.ok(result);
-    }
-
-    @GetMapping(params = "escenarioId")
-    public ResponseEntity<List<DtoEspectaculo>> getEspectaculos(@RequestParam Long escenarioId) {
-
-        List<DtoEspectaculo> result = this.service.getEspectaculoByEscenario(escenarioId);
-
-        if (result.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "No se encontraron espectáculos para la fecha especificada.");
         }
 
         return ResponseEntity.ok(result);

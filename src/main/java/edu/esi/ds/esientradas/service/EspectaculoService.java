@@ -13,53 +13,39 @@ import edu.esi.ds.esientradas.dto.DtoEspectaculo;
 import edu.esi.ds.esientradas.model.Espectaculo;
 
 @Service
+@Transactional(readOnly = true)
 public class EspectaculoService {
 
     @Autowired
     EspectaculoDAO dao;
 
-    @Transactional(readOnly = true)
     public DtoEspectaculo getEspectaculoById(Long id) {
-        Espectaculo e = dao.findById(id).orElse(null);
-        if (e == null) {
-            return null;
-        }
-        return toDto(e);
+        return dao.findById(id).map(this::toDto).orElse(null);
     }
 
-    @Transactional(readOnly = true)
     public List<DtoEspectaculo> getEspectaculos() {
-        return mapToDtoList(dao.findAll());
+        return toDto(dao.findAll());
     }
 
-    @Transactional(readOnly = true)
-    public List<DtoEspectaculo> getEspectaculoByArtist(String artist) {
-        return mapToDtoList(dao.findByArtistaContainingIgnoreCase(artist));
+    public List<DtoEspectaculo> getEspectaculoByArtist(String artista) {
+        return toDto(dao.findByArtistaContainingIgnoreCase(artista));
     }
 
-    public List<DtoEspectaculo> getEspectaculoByEscenario(String escenario) {
-        return mapToDtoList(dao.buscarPorNombreEscenario(escenario));
+    public List<DtoEspectaculo> getEspectaculoByDate(LocalDate fecha) {
+        return toDto(dao.findByFechaBetween(fecha.atStartOfDay(), fecha.atTime(LocalTime.MAX)));
     }
 
-    @Transactional(readOnly = true)
-    public List<DtoEspectaculo> getEspectaculoByDate(LocalDate date) {
-        return mapToDtoList(dao.findByFechaBetween(date.atStartOfDay(), date.atTime(LocalTime.MAX)));
+    public List<DtoEspectaculo> getEspectaculoByEscenario(String nombre) {
+        return toDto(dao.buscarPorNombreEscenario(nombre));
     }
 
-    @Transactional(readOnly = true)
     public List<DtoEspectaculo> getEspectaculoByEscenario(Long escenarioId) {
-        return mapToDtoList(dao.findByEscenarioId(escenarioId));
+        return toDto(dao.findByEscenarioId(escenarioId));
     }
 
-    // DATA MAPPING
-    private List<DtoEspectaculo> mapToDtoList(List<Espectaculo> list) {
-        if (list == null || list.isEmpty()) {
-            return List.of();
-        }
-
-        return list.stream()
-                .map(this::toDto)
-                .toList();
+    // MAPPING
+    private List<DtoEspectaculo> toDto(List<Espectaculo> list) {
+        return list.stream().map(this::toDto).toList();
     }
 
     private DtoEspectaculo toDto(Espectaculo e) {
@@ -67,7 +53,7 @@ public class EspectaculoService {
         dto.setId(e.getId());
         dto.setArtista(e.getArtista());
         dto.setFecha(e.getFecha());
-        dto.setEscenario(e.getEscenario());
+        dto.setEscenario(e.getEscenario().getNombre());
         return dto;
     }
 }

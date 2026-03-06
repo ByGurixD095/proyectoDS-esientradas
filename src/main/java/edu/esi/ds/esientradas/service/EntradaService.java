@@ -34,132 +34,132 @@ public class EntradaService {
     @Autowired
     CorreoService correoService;
 
+    // CONSULTAS
     @Transactional(readOnly = true)
     public List<DtoEntrada> getEntradasByEspectaculoId(Long id) {
-        return mapToDto(this.dao.findByEspectaculoIdAndEstado(id, Estado.DISPONIBLE));
+        return toDto(dao.findByEspectaculoIdAndEstado(id, Estado.DISPONIBLE));
     }
 
     @Transactional(readOnly = true)
     public int getNumeroEntradas(Long espectaculoId) {
-        return this.dao.countByEspectaculoIdAndEstado(espectaculoId, Estado.DISPONIBLE);
+        return dao.countByEspectaculoIdAndEstado(espectaculoId, Estado.DISPONIBLE);
     }
 
     @Transactional(readOnly = true)
     public DtoEntradaInfo getInfoEntradas(Long idEspectaculo) {
-        return this.dao.getInfoEntrada(idEspectaculo);
+        return dao.getInfoEntrada(idEspectaculo);
     }
 
     @Transactional(readOnly = true)
     public DtoEntrada getEntradaById(Long id) {
-        return toDto(this.dao.findById(id).orElse(null));
+        return dao.findById(id).map(this::toDto).orElse(null);
     }
 
     // PRERRESERVA
     @Transactional
     public ReservaResponse prerreservar(Long id, String token) {
-        Entrada e = this.dao.findById(id).orElse(null);
+        Entrada entrada = dao.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Entrada no encontrada."));
 
-        if (e == null) {
-            throw new IllegalArgumentException("No se encontró la entrada con el id especificado.");
+        if (entrada.getEstado() != Estado.DISPONIBLE) {
+            throw new IllegalArgumentException("La entrada no está disponible.");
         }
 
-        if (e.getEstado() != Estado.DISPONIBLE) {
-            throw new IllegalArgumentException("La entrada no está disponible para su reserva.");
-        }
-
-        String _token = "";
-
+        String tokenFinal;
         if (token == null || token.isBlank()) {
-            _token = UUID.randomUUID().toString();
+            tokenFinal = UUID.randomUUID().toString();
         } else {
-            validateToken(token);
-            _token = token;
+            boolean tokenVigente = dao.findByTokenPrerreserva(token).stream()
+                    .anyMatch(e -> e.getEstado() == Estado.RESERVADA
+                            && e.getFechaPrerreserva() != null
+                            && e.getFechaPrerreserva().plusMinutes(10).isAfter(LocalDateTime.now()));
+
+            if (!tokenVigente) {
+                throw new IllegalArgumentException("La sesión de reserva ha expirado.");
+            }
+            tokenFinal = token;
         }
 
-        e.setEstado(Estado.RESERVADA);
-        e.setTokenPrerreserva(_token);
-        e.setFechaPrerreserva(LocalDateTime.now());
+        entrada.setEstado(Estado.RESERVADA);
+        entrada.setTokenPrerreserva(tokenFinal);
+        entrada.setFechaPrerreserva(LocalDateTime.now());
+        dao.save(entrada);
 
-        this.dao.save(e);
-
-        return new ReservaResponse(
-                e.getId(),
-                _token,
-                e.getFechaPrerreserva().plusMinutes(10));
-
+        return new ReservaResponse(entrada.getId(), tokenFinal, entrada.getFechaPrerreserva().plusMinutes(10));
     }
 
     @Transactional
     public void cancelarPrerreserva(Long id, String token) {
-        Entrada entrada = this.dao.findById(id).orElse(null);
-
-        if (entrada == null) {
-            throw new IllegalArgumentException("No se encontró la entrada con el id especificado.");
-        }
+        Entrada entrada = dao.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Entrada no encontrada."));
 
         if (!token.equals(entrada.getTokenPrerreserva())) {
-            throw new IllegalArgumentException("El token de prerreserva no es válido para la entrada especificada.");
+            throw new IllegalArgumentException("Token no válido para esta entrada.");
         }
 
-        this.freeTicket(entrada);
-        this.dao.save(entrada);
+        liberarEntrada(entrada);
+        dao.save(entrada);
     }
 
     @Scheduled(fixedDelay = 60000)
     @Transactional
     public void liberarEntradasCaducadas() {
         LocalDateTime limite = LocalDateTime.now().minusMinutes(10);
-
-        List<Entrada> caducadas = this.dao.findByEstadoAndFechaPrerreservaBefore(Estado.RESERVADA, limite);
+        List<Entrada> caducadas = dao.findByEstadoAndFechaPrerreservaBefore(Estado.RESERVADA, limite);
 
         if (!caducadas.isEmpty()) {
-            for (Entrada e : caducadas) {
-                this.freeTicket(e);
-            }
-
-            this.dao.saveAll(caducadas);
+            caducadas.forEach(this::liberarEntrada);
+            dao.saveAll(caducadas);
         }
     }
 
     // COMPRA
+
     @Transactional
     public CompraResponse comprar(String tokenPrerreserva, String tokenUsuario) {
-        String email = this.usuariosClient.validarTokenYObtenerCorreo(tokenUsuario);
+        String email = usuariosClient.validarTokenYObtenerCorreo(tokenUsuario);
 
-        List<Entrada> entradas = this.dao.findByTokenPrerreserva(tokenPrerreserva);
+        List<Entrada> entradas = dao.findByTokenPrerreserva(tokenPrerreserva);
         if (entradas.isEmpty()) {
-            throw new IllegalStateException("No existen entradas prerreservadas con ese token");
+            throw new IllegalStateException("No hay entradas prerreservadas con ese token.");
         }
 
-        entradas.stream().forEach(e -> {
+        LocalDateTime ahora = LocalDateTime.now();
+        for (Entrada e : entradas) {
             if (e.getEstado() != Estado.RESERVADA) {
-                throw new IllegalStateException("La entrada ya no está reservada.");
+                throw new IllegalStateException("Una de las entradas ya no está reservada.");
             }
-
-            if (e.getFechaPrerreserva() == null ||
-                    e.getFechaPrerreserva().plusMinutes(10).isBefore(LocalDateTime.now())) {
+            if (e.getFechaPrerreserva() == null || e.getFechaPrerreserva().plusMinutes(10).isBefore(ahora)) {
                 throw new IllegalStateException("La sesión de reserva ha expirado.");
             }
-        });
-
-        /**
-         * AQUI IRÁ LA LÓGICA DE PAGO
-         * 
-         * CUANDO MACARIO LO EXPLIQUE PROCEDERÉ A IMPLEMENTARLO
-         */
-        for (Entrada e : entradas) {
-            setEntradacomoVendida(e, email);
         }
 
-        this.dao.saveAll(entradas);
+        // TODO: integrar pasarela de pagos externa
 
+        entradas.forEach(e -> marcarComoVendida(e, email));
+        dao.saveAll(entradas);
         correoService.enviarEntradas(email, entradas);
 
         return new CompraResponse("Compra realizada con éxito", email);
     }
 
-    // DATA MAPPING
-    private List<DtoEntrada> mapToDto(List<Entrada> entradas) {
+    // HELPERS PRIVADOS
+
+    private void liberarEntrada(Entrada e) {
+        e.setEstado(Estado.DISPONIBLE);
+        e.setTokenPrerreserva(null);
+        e.setFechaPrerreserva(null);
+    }
+
+    private void marcarComoVendida(Entrada e, String email) {
+        e.setEstado(Estado.VENDIDA);
+        e.setCorreoComprador(email);
+        e.setTokenPrerreserva(null);
+        e.setFechaPrerreserva(null);
+    }
+
+    // MAPPING
+    private List<DtoEntrada> toDto(List<Entrada> entradas) {
         return entradas.stream().map(this::toDto).toList();
     }
 
@@ -167,19 +167,19 @@ public class EntradaService {
         DtoEntrada dto;
 
         if (e instanceof DeZona zona) {
-            DtoEntradaDeZona dtoZona = new DtoEntradaDeZona();
-            dtoZona.setZona(zona.getZona());
-            dtoZona.setTipo("ZONA");
-            dto = dtoZona;
+            DtoEntradaDeZona d = new DtoEntradaDeZona();
+            d.setZona(zona.getZona());
+            d.setTipo("ZONA");
+            dto = d;
         } else if (e instanceof Precisa precisa) {
-            DtoEntradaPrecisa dtoPrecisa = new DtoEntradaPrecisa();
-            dtoPrecisa.setFila(precisa.getFila());
-            dtoPrecisa.setColumna(precisa.getColumna());
-            dtoPrecisa.setPlanta(precisa.getPlanta());
-            dtoPrecisa.setTipo("PRECISA");
-            dto = dtoPrecisa;
+            DtoEntradaPrecisa d = new DtoEntradaPrecisa();
+            d.setFila(precisa.getFila());
+            d.setColumna(precisa.getColumna());
+            d.setPlanta(precisa.getPlanta());
+            d.setTipo("PRECISA");
+            dto = d;
         } else {
-            throw new IllegalStateException("Tipo de entrada no reconocido");
+            throw new IllegalStateException("Tipo de entrada no reconocido.");
         }
 
         dto.setId(e.getId());
@@ -189,36 +189,5 @@ public class EntradaService {
         }
 
         return dto;
-    }
-
-    @Transactional
-    private void validateToken(String token) {
-        List<Entrada> tieneEntradas = this.dao.findByTokenPrerreserva(token);
-
-        if (tieneEntradas.isEmpty()) {
-            throw new IllegalArgumentException("El token de prerreserva no es válido.");
-        }
-
-        boolean valid = tieneEntradas.stream().anyMatch(e -> e.getEstado() == Estado.RESERVADA &&
-                e.getFechaPrerreserva() != null &&
-                e.getFechaPrerreserva().plusMinutes(10).isAfter(LocalDateTime.now()));
-
-        if (!valid) {
-            throw new IllegalArgumentException(
-                    "La sesión de reserva ha expirado. Por favor, seleccione las entradas de nuevo.");
-        }
-    }
-
-    private void freeTicket(Entrada e) {
-        e.setEstado(Estado.DISPONIBLE);
-        e.setTokenPrerreserva(null);
-        e.setFechaPrerreserva(null);
-    }
-
-    private void setEntradacomoVendida(Entrada e, String email) {
-        e.setEstado(Estado.VENDIDA);
-        e.setCorreoComprador(email);
-        e.setTokenPrerreserva(null);
-        e.setFechaPrerreserva(null);
     }
 }
