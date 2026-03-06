@@ -1,8 +1,8 @@
 package edu.esi.ds.esientradas.controller;
 
-import edu.esi.ds.esientradas.service.ColaService;
+//import edu.esi.ds.esientradas.service.ColaService;
 
-import org.springframework.beans.factory.annotation.Autowired;
+//import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class ColaEsperaController {
 
-    @Autowired
-    private ColaService colaService;
+    // @Autowired
+    // private ColaService colaService;
 
     @PostMapping
     public ResponseEntity<Void> join(
