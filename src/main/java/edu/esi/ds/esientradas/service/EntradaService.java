@@ -116,7 +116,7 @@ public class EntradaService {
     // COMPRA
 
     @Transactional
-    public CompraResponse comprar(String tokenPrerreserva, String tokenUsuario) {
+    public CompraResponse comprar(String tokenPrerreserva, String tokenUsuario, Long cantidad) {
         String email = usuariosClient.validarTokenYObtenerCorreo(tokenUsuario);
 
         List<Entrada> entradas = dao.findByTokenPrerreserva(tokenPrerreserva);
