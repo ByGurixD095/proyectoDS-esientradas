@@ -137,18 +137,15 @@ public class EntradaService {
         return true;
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public void confirmarCompra(String tokenPrerreserva, String email) {
         List<Entrada> entradas = dao.findByTokenPrerreserva(tokenPrerreserva);
-        guardarCambios(entradas, email);
-        correoService.enviarEntradas(email, entradas);
-
-    }
-
-    @Transactional
-    private void guardarCambios(List<Entrada> entradas, String email) {
+        if (entradas.isEmpty()) {
+            throw new IllegalStateException("No hay entradas con ese token.");
+        }
         entradas.forEach(e -> marcarComoVendida(e, email));
         dao.saveAll(entradas);
+        correoService.enviarEntradas(email, entradas);
     }
 
     // HELPERS PRIVADOS

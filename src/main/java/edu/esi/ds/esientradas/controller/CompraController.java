@@ -10,13 +10,14 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import edu.esi.ds.esientradas.dto.CompraRequest;
+import edu.esi.ds.esientradas.dto.ConfirmRequest;
 import edu.esi.ds.esientradas.service.CompraService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
 @RequestMapping("/compras")
-@CrossOrigin(origins = "")
+@CrossOrigin(origins = "*")
 public class CompraController {
 
     @Autowired
@@ -37,9 +38,12 @@ public class CompraController {
 
     @PostMapping("/confirm")
     public ResponseEntity<Void> confirm(@RequestBody ConfirmRequest request) {
-        // TODO: process POST request
-
-        return entity;
+        try {
+            this.service.confirmarCompra(request.tokenPrerreserva(), request.email());
+            return ResponseEntity.ok().build();
+        } catch (IllegalStateException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        }
     }
 
 }

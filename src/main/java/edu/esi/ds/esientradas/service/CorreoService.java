@@ -3,6 +3,8 @@ package edu.esi.ds.esientradas.service;
 import edu.esi.ds.esientradas.model.DeZona;
 import edu.esi.ds.esientradas.model.Entrada;
 import edu.esi.ds.esientradas.model.Precisa;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import java.util.List;
 @Service
 public class CorreoService {
 
+    @Autowired
     private JavaMailSender mailSender;
 
     public void enviarEntradas(String correo, List<Entrada> entradas) {
