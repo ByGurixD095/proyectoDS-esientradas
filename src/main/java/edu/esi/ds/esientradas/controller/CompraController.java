@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import edu.esi.ds.esientradas.dto.CompraRequest;
+import edu.esi.ds.esientradas.dto.CompraResponse;
 import edu.esi.ds.esientradas.dto.ConfirmRequest;
 import edu.esi.ds.esientradas.service.CompraService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +25,7 @@ public class CompraController {
     CompraService service;
 
     @GetMapping("/prepay")
-    public ResponseEntity<String> prepay(@RequestBody CompraRequest request) {
+    public ResponseEntity<CompraResponse> prepay(@RequestBody CompraRequest request) {
         try {
             return ResponseEntity
                     .ok(this.service.crearPaymentIntent(request.precio(), request.tokenPrerreserva(),

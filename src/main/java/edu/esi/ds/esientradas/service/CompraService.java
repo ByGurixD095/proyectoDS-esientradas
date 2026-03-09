@@ -11,6 +11,8 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
 
+import edu.esi.ds.esientradas.dto.CompraResponse;
+
 @Service
 public class CompraService {
 
@@ -20,9 +22,9 @@ public class CompraService {
     @Autowired
     EntradaService entradaService;
 
-    public String crearPaymentIntent(Long precioCentimos, String tokenPrerreserva, String tokenUsuario) {
-        boolean canBuy = entradaService.canBuy(tokenPrerreserva, tokenUsuario);
-        if (!canBuy) {
+    public CompraResponse crearPaymentIntent(Long precioCentimos, String tokenPrerreserva, String tokenUsuario) {
+        String canBuy = entradaService.canBuy(tokenPrerreserva, tokenUsuario);
+        if (canBuy.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede comprar las entradas.");
         }
 
@@ -36,7 +38,7 @@ public class CompraService {
                     .build();
 
             PaymentIntent intent = PaymentIntent.create(params);
-            return intent.getClientSecret();
+            return new CompraResponse(intent.getClientSecret(), canBuy);
 
         } catch (StripeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
