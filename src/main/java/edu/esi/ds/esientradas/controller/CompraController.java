@@ -10,9 +10,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import edu.esi.ds.esientradas.dto.CompraRequest;
-import edu.esi.ds.esientradas.dto.CompraResponse;
-import edu.esi.ds.esientradas.service.EntradaService;
+import edu.esi.ds.esientradas.service.CompraService;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
 @RequestMapping("/compras")
@@ -20,17 +20,26 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class CompraController {
 
     @Autowired
-    EntradaService service;
+    CompraService service;
 
     @GetMapping("/prepay")
-    public ResponseEntity<CompraResponse> prepay(@RequestBody CompraRequest request) {
+    public ResponseEntity<String> prepay(@RequestBody CompraRequest request) {
         try {
             return ResponseEntity
-                    .ok(this.service.comprar(request.tokenPrerreserva(), request.tokenUsuario(), request.precio()));
+                    .ok(this.service.crearPaymentIntent(request.precio(), request.tokenPrerreserva(),
+                            request.tokenUsuario()));
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (IllegalStateException e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
+
+    @PostMapping("/confirm")
+    public ResponseEntity<Void> confirm(@RequestBody ConfirmRequest request) {
+        // TODO: process POST request
+
+        return entity;
+    }
+
 }

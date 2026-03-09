@@ -10,7 +10,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import edu.esi.ds.esientradas.dto.CompraResponse;
 import edu.esi.ds.esientradas.dto.DtoEntrada;
 import edu.esi.ds.esientradas.dto.DtoEntradaDeZona;
 import edu.esi.ds.esientradas.dto.DtoEntradaInfo;
@@ -114,33 +113,42 @@ public class EntradaService {
     }
 
     // COMPRA
-
-    @Transactional
-    public CompraResponse comprar(String tokenPrerreserva, String tokenUsuario, Long cantidad) {
+    public boolean canBuy(String tokenPrerreserva, String tokenUsuario) {
         String email = usuariosClient.validarTokenYObtenerCorreo(tokenUsuario);
+        if (email.isEmpty() || email == null) {
+            return false;
+        }
 
         List<Entrada> entradas = dao.findByTokenPrerreserva(tokenPrerreserva);
         if (entradas.isEmpty()) {
-            throw new IllegalStateException("No hay entradas prerreservadas con ese token.");
+            return false;
         }
 
         LocalDateTime ahora = LocalDateTime.now();
         for (Entrada e : entradas) {
             if (e.getEstado() != Estado.RESERVADA) {
-                throw new IllegalStateException("Una de las entradas ya no está reservada.");
+                return false;
             }
             if (e.getFechaPrerreserva() == null || e.getFechaPrerreserva().plusMinutes(10).isBefore(ahora)) {
-                throw new IllegalStateException("La sesión de reserva ha expirado.");
+                return false;
             }
         }
 
-        // TODO: integrar pasarela de pagos externa
+        return true;
+    }
 
-        entradas.forEach(e -> marcarComoVendida(e, email));
-        dao.saveAll(entradas);
+    @Transactional(readOnly = true)
+    public void confirmarCompra(String tokenPrerreserva, String email) {
+        List<Entrada> entradas = dao.findByTokenPrerreserva(tokenPrerreserva);
+        guardarCambios(entradas, email);
         correoService.enviarEntradas(email, entradas);
 
-        return new CompraResponse("Compra realizada con éxito", email);
+    }
+
+    @Transactional
+    private void guardarCambios(List<Entrada> entradas, String email) {
+        entradas.forEach(e -> marcarComoVendida(e, email));
+        dao.saveAll(entradas);
     }
 
     // HELPERS PRIVADOS
