@@ -63,8 +63,9 @@ public class EntradaService {
 
     @Transactional
     public ReservaResponse prerreservar(Long id, String token) {
-        Entrada entrada = dao.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Entrada no encontrada."));
+        Entrada entrada = dao.findByIdWithLock(id)
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Entrada no encontrada o reservada."));
 
         if (entrada.getEstado() != Estado.DISPONIBLE) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "La entrada no está disponible.");
