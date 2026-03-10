@@ -22,6 +22,7 @@ public class EscenarioController {
     @Autowired
     EscenarioService service;
 
+    // GET
     @GetMapping
     public ResponseEntity<List<DtoEscenario>> getEscenarios() {
         return ResponseEntity.ok(this.service.getEscenarios());

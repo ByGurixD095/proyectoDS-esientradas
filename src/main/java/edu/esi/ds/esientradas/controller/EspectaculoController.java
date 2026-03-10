@@ -25,13 +25,7 @@ public class EspectaculoController {
     @Autowired
     EspectaculoService service;
 
-    // GET /espectaculos
-    // GET /espectaculos?artista=Radiohead
-    // GET /espectaculos?fecha=2026-03-14
-    // GET /espectaculos?escenario=Palacio
-    // GET /espectaculos?escenarioId=3
-    // Todos los filtros son opcionales y se pueden combinar desde el service.
-    // Si no se pasa ningún parámetro, devuelve todos.
+    // GET
 
     @GetMapping
     public ResponseEntity<List<DtoEspectaculo>> getEspectaculos(
@@ -62,7 +56,6 @@ public class EspectaculoController {
         return ResponseEntity.ok(result);
     }
 
-    // GET /espectaculos/{id}
     @GetMapping("/{id}")
     public ResponseEntity<DtoEspectaculo> getEspectaculoById(@PathVariable Long id) {
         DtoEspectaculo result = service.getEspectaculoById(id);

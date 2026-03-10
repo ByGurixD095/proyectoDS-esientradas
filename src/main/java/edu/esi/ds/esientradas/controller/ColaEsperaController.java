@@ -1,9 +1,9 @@
 package edu.esi.ds.esientradas.controller;
 
-//import edu.esi.ds.esientradas.service.ColaService;
+import edu.esi.ds.esientradas.dto.ColaResponse;
+import edu.esi.ds.esientradas.service.ColaService;
 
-//import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,27 +12,33 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class ColaEsperaController {
 
-    // @Autowired
-    // private ColaService colaService;
+    @Autowired
+    private ColaService colaService;
 
-    @PostMapping
-    public ResponseEntity<Void> join(
-            @PathVariable Long espectaculoId,
-            @RequestHeader("X-User-Email") String correoUsuario) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
-    }
+    // GET
 
     @GetMapping
-    public ResponseEntity<Void> position(
+    public ResponseEntity<ColaResponse> position(
             @PathVariable Long espectaculoId,
             @RequestHeader("X-User-Email") String correoUsuario) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.ok(this.colaService.consultarPosicion(espectaculoId, correoUsuario));
     }
 
-    @DeleteMapping
-    public ResponseEntity<Void> leave(
+    // POST
+
+    @PostMapping
+    public ResponseEntity<ColaResponse> join(
             @PathVariable Long espectaculoId,
             @RequestHeader("X-User-Email") String correoUsuario) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        return ResponseEntity.ok(this.colaService.unirse(espectaculoId, correoUsuario));
+    }
+
+    // DELETE
+
+    @DeleteMapping
+    public ResponseEntity<ColaResponse> leave(
+            @PathVariable Long espectaculoId,
+            @RequestHeader("X-User-Email") String correoUsuario) {
+        return ResponseEntity.ok(this.colaService.abandonar(espectaculoId, correoUsuario));
     }
 }

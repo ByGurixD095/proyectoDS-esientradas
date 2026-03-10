@@ -28,25 +28,23 @@ public class EntradaController {
     @Autowired
     EntradaService service;
 
-    // GET /espectaculos/{espectaculoId}/entradas
+    // GET
+
     @GetMapping
     public ResponseEntity<List<DtoEntrada>> getEntradas(@PathVariable Long espectaculoId) {
         return ResponseEntity.ok(service.getEntradasByEspectaculoId(espectaculoId));
     }
 
-    // GET /espectaculos/{espectaculoId}/entradas/info
     @GetMapping("/info")
     public ResponseEntity<DtoEntradaInfo> getInfo(@PathVariable Long espectaculoId) {
         return ResponseEntity.ok(service.getInfoEntradas(espectaculoId));
     }
 
-    // GET /espectaculos/{espectaculoId}/entradas/cantidad
     @GetMapping("/cantidad")
     public ResponseEntity<Integer> getCantidad(@PathVariable Long espectaculoId) {
         return ResponseEntity.ok(service.getNumeroEntradas(espectaculoId));
     }
 
-    // GET /espectaculos/{espectaculoId}/entradas/{entradaId}
     @GetMapping("/{entradaId}")
     public ResponseEntity<DtoEntrada> getEntradaById(
             @PathVariable Long espectaculoId,
@@ -61,7 +59,8 @@ public class EntradaController {
         return ResponseEntity.ok(result);
     }
 
-    // POST /espectaculos/{espectaculoId}/entradas/{entradaId}/prerreservar
+    // POST
+
     @PostMapping("/{entradaId}/prerreservar")
     public ResponseEntity<ReservaResponse> prerreservar(
             @PathVariable Long espectaculoId,
@@ -71,7 +70,7 @@ public class EntradaController {
     }
 
     // DELETE
-    // /espectaculos/{espectaculoId}/entradas/{entradaId}/prerreservar/{token}
+
     @DeleteMapping("/{entradaId}/prerreservar/{token}")
     public ResponseEntity<Void> cancelarPrerreserva(
             @PathVariable Long espectaculoId,

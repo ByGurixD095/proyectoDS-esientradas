@@ -23,11 +23,6 @@ public class CompraService {
     EntradaService entradaService;
 
     public CompraResponse crearPaymentIntent(Long precioCentimos, String tokenPrerreserva, String tokenUsuario) {
-        String canBuy = entradaService.canBuy(tokenPrerreserva, tokenUsuario);
-        if (canBuy.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "No se puede comprar las entradas.");
-        }
-
         Stripe.apiKey = _key;
 
         try {
@@ -38,7 +33,7 @@ public class CompraService {
                     .build();
 
             PaymentIntent intent = PaymentIntent.create(params);
-            return new CompraResponse(intent.getClientSecret(), canBuy);
+            return new CompraResponse(intent.getClientSecret(), "ejemplo");
 
         } catch (StripeException e) {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,

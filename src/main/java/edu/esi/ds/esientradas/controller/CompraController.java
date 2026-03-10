@@ -24,6 +24,8 @@ public class CompraController {
     @Autowired
     CompraService service;
 
+    // GET
+
     @GetMapping("/prepay")
     public ResponseEntity<CompraResponse> prepay(@RequestBody CompraRequest request) {
         try {
@@ -36,6 +38,8 @@ public class CompraController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
+
+    // POST
 
     @PostMapping("/confirm")
     public ResponseEntity<Void> confirm(@RequestBody ConfirmRequest request) {
