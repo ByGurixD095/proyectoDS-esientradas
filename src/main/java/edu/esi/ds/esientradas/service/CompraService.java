@@ -16,7 +16,7 @@ import edu.esi.ds.esientradas.dto.CompraResponse;
 @Service
 public class CompraService {
 
-    @Value("${api_key_Stripe}")
+    @Value("${stripe.api-key}")
     private String _key;
 
     @Autowired

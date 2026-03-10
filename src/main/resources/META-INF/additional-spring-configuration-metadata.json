@@ -1,0 +1,14 @@
+{
+    "properties": [
+        {
+            "name": "esiusuarios.base-url",
+            "type": "java.lang.String",
+            "description": "URL base del servicio esiusuarios"
+        },
+        {
+            "name": "stripe.api-key",
+            "type": "java.lang.String",
+            "description": "API key de Stripe"
+        }
+    ]
+}
