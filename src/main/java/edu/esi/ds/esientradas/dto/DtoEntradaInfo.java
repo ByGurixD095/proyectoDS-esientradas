@@ -1,11 +1,6 @@
 package edu.esi.ds.esientradas.dto;
 
-public interface DtoEntradaInfo {
-    Integer getTotal();
+import java.math.BigDecimal;
 
-    Integer getLibres();
-
-    Integer getReservadas();
-
-    Integer getVendidas();
+public record DtoEntradaInfo(BigDecimal total, BigDecimal libres, BigDecimal reservadas, BigDecimal vendidas) {
 }

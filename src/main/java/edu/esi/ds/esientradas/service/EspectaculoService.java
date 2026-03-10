@@ -17,7 +17,7 @@ import edu.esi.ds.esientradas.model.Espectaculo;
 public class EspectaculoService {
 
     @Autowired
-    EspectaculoDAO dao;
+    private EspectaculoDAO dao;
 
     public DtoEspectaculo getEspectaculoById(Long id) {
         return dao.findById(id).map(this::toDto).orElse(null);
@@ -49,11 +49,10 @@ public class EspectaculoService {
     }
 
     private DtoEspectaculo toDto(Espectaculo e) {
-        DtoEspectaculo dto = new DtoEspectaculo();
-        dto.setId(e.getId());
-        dto.setArtista(e.getArtista());
-        dto.setFecha(e.getFecha());
-        dto.setEscenario(e.getEscenario().getNombre());
-        return dto;
+        return new DtoEspectaculo(
+                e.getId(),
+                e.getArtista(),
+                e.getFecha(),
+                e.getEscenario().getNombre());
     }
 }

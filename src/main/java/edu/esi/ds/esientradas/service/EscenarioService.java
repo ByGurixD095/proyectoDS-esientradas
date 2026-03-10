@@ -26,10 +26,6 @@ public class EscenarioService {
     }
 
     private DtoEscenario toDto(Escenario e) {
-        DtoEscenario dto = new DtoEscenario();
-        dto.setId(e.getId());
-        dto.setNombre(e.getNombre());
-        dto.setDescripcion(e.getDescripcion());
-        return dto;
+        return new DtoEscenario(e.getId(), e.getNombre(), e.getDescripcion());
     }
 }

@@ -13,7 +13,6 @@ import edu.esi.ds.esientradas.dto.CompraRequest;
 import edu.esi.ds.esientradas.dto.CompraResponse;
 import edu.esi.ds.esientradas.dto.ConfirmRequest;
 import edu.esi.ds.esientradas.service.CompraService;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
@@ -24,9 +23,9 @@ public class CompraController {
     @Autowired
     CompraService service;
 
-    // GET
+    // POST
 
-    @GetMapping("/prepay")
+    @PostMapping("/prepay")
     public ResponseEntity<CompraResponse> prepay(@RequestBody CompraRequest request) {
         try {
             return ResponseEntity
@@ -38,8 +37,6 @@ public class CompraController {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
-
-    // POST
 
     @PostMapping("/confirm")
     public ResponseEntity<Void> confirm(@RequestBody ConfirmRequest request) {

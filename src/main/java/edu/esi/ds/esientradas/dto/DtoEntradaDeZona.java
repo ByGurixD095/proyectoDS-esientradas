@@ -1,13 +1,11 @@
 package edu.esi.ds.esientradas.dto;
 
-public class DtoEntradaDeZona extends DtoEntrada {
-    private Integer zona;
+import java.math.BigDecimal;
 
-    public Integer getZona() { 
-        return zona; 
-    }
-
-    public void setZona(Integer zona) { 
-        this.zona = zona; 
-    }
+public record DtoEntradaDeZona(
+        Long id,
+        Long espectaculoId,
+        BigDecimal precio,
+        String tipo,
+        Integer zona) implements DtoEntrada {
 }

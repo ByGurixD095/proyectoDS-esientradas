@@ -174,30 +174,14 @@ public class EntradaService {
     }
 
     private DtoEntrada toDto(Entrada e) {
-        DtoEntrada dto;
+        BigDecimal precio = (e.getPrecio() != null) ? BigDecimal.valueOf(e.getPrecio(), 2) : null;
 
         if (e instanceof DeZona zona) {
-            DtoEntradaDeZona d = new DtoEntradaDeZona();
-            d.setZona(zona.getZona());
-            d.setTipo("ZONA");
-            dto = d;
+            return new DtoEntradaDeZona(e.getId(), e.getEspectaculo().getId(), precio, "ZONA", zona.getZona());
         } else if (e instanceof Precisa precisa) {
-            DtoEntradaPrecisa d = new DtoEntradaPrecisa();
-            d.setFila(precisa.getFila());
-            d.setColumna(precisa.getColumna());
-            d.setPlanta(precisa.getPlanta());
-            d.setTipo("PRECISA");
-            dto = d;
-        } else {
-            throw new IllegalStateException("Tipo de entrada no reconocido.");
+            return new DtoEntradaPrecisa(e.getId(), e.getEspectaculo().getId(), precio, "PRECISA",
+                    precisa.getFila(), precisa.getColumna(), precisa.getPlanta());
         }
-
-        dto.setId(e.getId());
-        dto.setEspectaculoId(e.getEspectaculo().getId());
-        if (e.getPrecio() != null) {
-            dto.setPrecio(BigDecimal.valueOf(e.getPrecio(), 2));
-        }
-
-        return dto;
+        throw new IllegalStateException("Tipo desconocido");
     }
 }

@@ -2,42 +2,12 @@ package edu.esi.ds.esientradas.dto;
 
 import java.math.BigDecimal;
 
-public abstract class DtoEntrada {
+public sealed interface DtoEntrada permits DtoEntradaDeZona, DtoEntradaPrecisa {
+    Long id();
 
-    private Long id;
-    private Long espectaculoId;
-    private BigDecimal precio;
-    private String tipo;
+    Long espectaculoId();
 
-    public Long getId() {
-        return id;
-    }
+    BigDecimal precio();
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getEspectaculoId() {
-        return espectaculoId;
-    }
-
-    public void setEspectaculoId(Long espectaculoId) {
-        this.espectaculoId = espectaculoId;
-    }
-
-    public BigDecimal getPrecio() {
-        return precio;
-    }
-
-    public void setPrecio(BigDecimal precio) {
-        this.precio = precio;
-    }
-
-    public String getTipo() {
-        return tipo;
-    }
-
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
-    }
+    String tipo();
 }
