@@ -48,11 +48,6 @@ public class EspectaculoController {
             result = service.getEspectaculos();
         }
 
-        if (result.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                    "No se encontraron espectáculos para los filtros especificados.");
-        }
-
         return ResponseEntity.ok(result);
     }
 
