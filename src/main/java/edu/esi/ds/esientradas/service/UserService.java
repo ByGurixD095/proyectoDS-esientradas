@@ -21,7 +21,7 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No hay token");
         }
 
-        String endpoint = baseUrl + "/external/token/";
+        String endpoint = baseUrl + "/users/token/";
         try {
             String email = rest.getForObject(endpoint + tokenUsuario, String.class);
 
