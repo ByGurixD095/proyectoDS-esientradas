@@ -39,12 +39,17 @@ public class CompraController {
     }
 
     @PostMapping("/confirm")
-    public ResponseEntity<Void> confirm(@RequestBody ConfirmRequest request) {
+    public ResponseEntity<String> confirm(@RequestBody ConfirmRequest request) {
         try {
-            this.service.confirmarCompra(request.tokenPrerreserva(), request.email());
-            return ResponseEntity.ok().build();
-        } catch (IllegalStateException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+            service.confirmarCompra(
+                    request.paymentIntentId(),
+                    request.tokenPrerreserva(),
+                    request.email());
+
+            return ResponseEntity.ok("Compra Exitosa.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Error al confirmar la compra:" + e.getMessage());
         }
     }
 
