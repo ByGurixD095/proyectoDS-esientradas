@@ -136,6 +136,11 @@ public class EntradaService {
         if (entradas.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No hay entradas con ese token.");
         }
+
+        if (!entradas.isEmpty() && entradas.get(0).getEstado() == Estado.VENDIDA) {
+            return;
+        }
+
         entradas.forEach(e -> marcarComoVendida(e, email));
         dao.saveAll(entradas);
         correoService.enviarEntradas(email, entradas);
