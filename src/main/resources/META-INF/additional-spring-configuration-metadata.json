@@ -14,6 +14,16 @@
             "name": "brevo.api.key",
             "type": "java.lang.String",
             "description": "API key de Brevo"
+        },
+        {
+            "name": "correo.username",
+            "type": "java.lang.String",
+            "description": "Nombre de usuario para el servicio de correo"
+        },
+        {
+            "name": "correo.password",
+            "type": "java.lang.String",
+            "description": "Contraseña para el servicio de correo"
         }
     ]
 }

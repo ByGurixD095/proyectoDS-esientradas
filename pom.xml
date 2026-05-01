@@ -93,10 +93,8 @@
 		</dependency>
 		
 		<dependency>
-			<groupId>com.brevo</groupId>
-			<artifactId>brevo</artifactId>
-			<version>1.1.2</version>
-			<scope>compile</scope>
+			<groupId>org.eclipse.angus</groupId>
+			<artifactId>angus-mail</artifactId>
 		</dependency>
 
 		<dependency>
@@ -104,7 +102,7 @@
 			<artifactId>core</artifactId>
 			<version>3.5.3</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>com.google.zxing</groupId>
 			<artifactId>javase</artifactId>

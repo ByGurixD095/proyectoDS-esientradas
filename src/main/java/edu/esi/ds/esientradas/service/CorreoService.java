@@ -3,53 +3,107 @@ package edu.esi.ds.esientradas.service;
 import edu.esi.ds.esientradas.model.DeZona;
 import edu.esi.ds.esientradas.model.Entrada;
 import edu.esi.ds.esientradas.model.Precisa;
+import jakarta.activation.DataHandler;
+import jakarta.mail.*;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
+import jakarta.mail.util.ByteArrayDataSource;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.*;
-import java.awt.image.BufferedImage;
-import javax.imageio.ImageIO;
-import java.io.ByteArrayOutputStream;
-
-import com.google.zxing.*;
+import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Properties;
 
 @Service
 public class CorreoService {
 
-    @Value("${brevo.api.key}")
-    private String apiKey;
+    @Value("${correo.username}")
+    private String username;
 
-    @Autowired
-    private RestTemplate restTemplate; // ← inyectado, no instanciado a mano
-
-    private static final String BREVO_URL = "https://api.brevo.com/v3/smtp/email";
+    @Value("${correo.password}")
+    private String appPassword;
 
     public void enviarEntradas(String correo, List<Entrada> entradas) {
-        String contenido = construirContenido(entradas);
-        enviarConBrevo(correo, "Tus entradas de ESIEntradas", contenido);
+        try {
+            // Generamos los bytes de cada QR en orden
+            List<byte[]> qrImages = new ArrayList<>();
+            for (Entrada e : entradas) {
+                qrImages.add(generarQRBytes("ENTRADA_ID:" + e.getId()));
+            }
+
+            String html = construirContenido(entradas);
+            sendHtmlEmail(correo, "Tus entradas de ESIEntradas", html, qrImages);
+            System.out.println("Correo enviado correctamente a " + correo);
+
+        } catch (Exception e) {
+            System.err.println("Error al enviar correo a " + correo + ": " + e.getMessage());
+        }
+    }
+
+    private void sendHtmlEmail(String to, String subject, String htmlContent,
+            List<byte[]> qrImages) throws MessagingException {
+        Properties props = new Properties();
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.host", "smtp.gmail.com");
+        props.put("mail.smtp.port", "587");
+        props.put("mail.smtp.connectiontimeout", "10000");
+        props.put("mail.smtp.timeout", "10000");
+        props.put("mail.smtp.writetimeout", "10000");
+
+        Session session = Session.getInstance(props, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(username, appPassword);
+            }
+        });
+
+        MimeMessage message = new MimeMessage(session);
+        message.setFrom(new InternetAddress(username));
+        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+        message.setSubject(subject, "UTF-8");
+
+        MimeMultipart multipart = new MimeMultipart("related");
+
+        // Parte HTML
+        MimeBodyPart htmlPart = new MimeBodyPart();
+        htmlPart.setContent(htmlContent, "text/html; charset=UTF-8");
+        multipart.addBodyPart(htmlPart);
+
+        // Un adjunto CID por cada QR
+        for (int i = 0; i < qrImages.size(); i++) {
+            MimeBodyPart imagePart = new MimeBodyPart();
+            imagePart.setDataHandler(
+                    new DataHandler(new ByteArrayDataSource(qrImages.get(i), "image/png")));
+            imagePart.setHeader("Content-ID", "<qr" + i + ">");
+            imagePart.setDisposition(MimeBodyPart.INLINE);
+            multipart.addBodyPart(imagePart);
+        }
+
+        message.setContent(multipart);
+        Transport.send(message);
     }
 
     private String construirContenido(List<Entrada> entradas) {
         StringBuilder sb = new StringBuilder();
-
         sb.append("<h2>¡Gracias por tu compra en ESIEntradas!</h2>");
         sb.append("<p>Tus entradas:</p>");
 
-        for (Entrada e : entradas) {
-
-            String contenidoQR = "ENTRADA_ID:" + e.getId();
-            String qrBase64 = generarQRBase64(contenidoQR);
+        for (int i = 0; i < entradas.size(); i++) {
+            Entrada e = entradas.get(i);
 
             sb.append("<div style='border:1px solid #ccc;padding:15px;margin-bottom:20px;'>");
-
             sb.append("<p><b>Espectáculo:</b> ").append(e.getEspectaculo().getArtista()).append("</p>");
             sb.append("<p><b>Fecha:</b> ").append(e.getEspectaculo().getFecha()).append("</p>");
             sb.append("<p><b>Recinto:</b> ").append(e.getEspectaculo().getEscenario().getNombre()).append("</p>");
@@ -63,10 +117,10 @@ public class CorreoService {
                 sb.append("<p><b>Zona:</b> ").append(dz.getZona()).append("</p>");
             }
 
+            // Referencia al CID del QR adjunto
             sb.append("<div style='text-align:center;margin-top:10px;'>");
-            sb.append("<img src='data:image/png;base64,")
-                    .append(qrBase64)
-                    .append("' width='150' height='150'/>");
+            sb.append("<img src='cid:qr").append(i)
+                    .append("' width='150' height='150' alt='QR entrada'/>");
             sb.append("<p>Escanea este código en la entrada</p>");
             sb.append("</div>");
 
@@ -74,59 +128,16 @@ public class CorreoService {
         }
 
         sb.append("<p>Presenta este correo en la entrada. ¡Disfruta del espectáculo!</p>");
-
         return sb.toString();
     }
 
-    private void enviarConBrevo(String destinatario, String asunto, String contenido) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.set("api-key", apiKey);
-
-        Map<String, Object> sender = new HashMap<>();
-        sender.put("name", "ESIEntradas");
-        sender.put("email", "gonzalo.lopez16@alu.uclm.es");
-
-        Map<String, String> destinatarioMap = new HashMap<>();
-        destinatarioMap.put("email", destinatario);
-
-        Map<String, Object> body = new HashMap<>();
-        body.put("sender", sender);
-        body.put("to", List.of(destinatarioMap));
-        body.put("subject", asunto);
-        body.put("htmlContent", contenido);
-
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
-
-        try {
-            ResponseEntity<String> response = restTemplate.postForEntity(BREVO_URL, request, String.class);
-
-            if (response.getStatusCode().is2xxSuccessful()) {
-                System.out.println("Correo enviado correctamente a " + destinatario);
-            } else {
-                System.err.println("Brevo devolvió estado inesperado: " + response.getStatusCode());
-            }
-
-        } catch (HttpClientErrorException e) {
-            // 4xx: API key mal, payload incorrecto, etc.
-            System.err.println("Error del cliente al enviar correo con Brevo ["
-                    + e.getStatusCode() + "]: " + e.getResponseBodyAsString());
-        } catch (HttpServerErrorException e) {
-            // 5xx: Brevo caído
-            System.err.println("Error del servidor Brevo ["
-                    + e.getStatusCode() + "]: " + e.getResponseBodyAsString());
-        } catch (Exception e) {
-            System.err.println("Error inesperado enviando correo: " + e.getMessage());
-        }
-    }
-
-    private String generarQRBase64(String contenido) {
+    // Ahora devuelve bytes directamente, no Base64
+    private byte[] generarQRBytes(String contenido) {
         try {
             QRCodeWriter qrWriter = new QRCodeWriter();
             BitMatrix matrix = qrWriter.encode(contenido, BarcodeFormat.QR_CODE, 200, 200);
 
             BufferedImage image = new BufferedImage(200, 200, BufferedImage.TYPE_INT_RGB);
-
             for (int x = 0; x < 200; x++) {
                 for (int y = 0; y < 200; y++) {
                     image.setRGB(x, y, matrix.get(x, y) ? 0x000000 : 0xFFFFFF);
@@ -135,11 +146,11 @@ public class CorreoService {
 
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ImageIO.write(image, "png", baos);
-
-            return Base64.getEncoder().encodeToString(baos.toByteArray());
+            return baos.toByteArray();
 
         } catch (Exception e) {
-            return "";
+            System.err.println("Error generando QR: " + e.getMessage());
+            return new byte[0];
         }
     }
 
