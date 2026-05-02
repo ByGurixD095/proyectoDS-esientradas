@@ -28,8 +28,8 @@ public class CorreoService {
     private List<byte[]> generarQRs(List<Entrada> entradas) {
         List<byte[]> result = new ArrayList<>();
         for (Entrada e : entradas) {
-            String contenido = "ENTRADA_ID:" + e.getId()
-                    + "Espectáculo: " + e.getEspectaculo().getArtista();
+            String contenido = "ENTRADA_ID:" + e.getId() + '\n' +
+                    "Espectáculo: " + e.getEspectaculo().getArtista();
             result.add(qrService.generar(contenido));
         }
         return result;
@@ -109,7 +109,7 @@ public class CorreoService {
         sb.append("</div>");
         return sb.toString();
     }
-
+    
     private void fila(StringBuilder sb, String label, String valor) {
         sb.append("<tr>")
                 .append("<td style='color:#6e6e73;padding:4px 0;width:80px;'>").append(label).append("</td>")
@@ -120,6 +120,6 @@ public class CorreoService {
     private String formatPrecio(Long centimos) {
         if (centimos == null)
             return "N/D";
-        return String.format("%.2f EUR", centimos / 100.0);
+        return String.format(" %.2f EUR", centimos / 100.0);
     }
 }
