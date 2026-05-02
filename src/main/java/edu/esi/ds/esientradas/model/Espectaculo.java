@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -16,7 +17,8 @@ import jakarta.persistence.OneToMany;
 
 @Entity
 public class Espectaculo {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String artista;
     private LocalDateTime fecha;
@@ -27,6 +29,9 @@ public class Espectaculo {
 
     @OneToMany(mappedBy = "espectaculo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Entrada> entradas = new ArrayList<>();
+
+    @Column(name = "cola_activa", nullable = false)
+    private boolean colaActiva = false;
 
     public Long getId() {
         return id;
@@ -68,4 +73,11 @@ public class Espectaculo {
         this.entradas = entradas;
     }
 
+    public boolean isColaActiva() {
+        return colaActiva;
+    }
+
+    public void setColaActiva(boolean c) {
+        this.colaActiva = c;
+    }
 }

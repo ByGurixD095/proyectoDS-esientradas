@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import edu.esi.ds.esientradas.dto.ColaResponse;
 import edu.esi.ds.esientradas.dto.DtoEntrada;
 import edu.esi.ds.esientradas.dto.DtoEntradaComprada;
 import edu.esi.ds.esientradas.dto.DtoEntradaDeZona;
@@ -37,6 +38,9 @@ public class EntradaService {
 
     @Autowired
     CorreoService correoService;
+
+    @Autowired
+    ColaService colaService;
 
     // ── CONSULTAS ──────────────────────────────────────────────────────────────
 
@@ -138,12 +142,35 @@ public class EntradaService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No hay entradas con ese token.");
         }
 
-        if (!entradas.isEmpty() && entradas.get(0).getEstado() == Estado.VENDIDA) {
+        if (entradas.get(0).getEstado() == Estado.VENDIDA) {
             return;
+        }
+
+        Long espectaculoId = entradas.get(0).getEspectaculo().getId();
+        boolean colaActiva = entradas.get(0).getEspectaculo().isColaActiva();
+
+        if (colaActiva) {
+            ColaResponse posicion;
+            try {
+                posicion = colaService.consultarPosicion(espectaculoId, email);
+            } catch (Exception e) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Debes unirte a la cola para este espectaculo.");
+            }
+
+            if (!posicion.esTuTurno()) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Aun no es tu turno. Posicion en cola: " + posicion.posicion());
+            }
         }
 
         entradas.forEach(e -> marcarComoVendida(e, email));
         dao.saveAll(entradas);
+
+        if (colaActiva) {
+            colaService.marcarCompletado(espectaculoId, email);
+        }
+
         correoService.enviarEntradas(email, entradas);
     }
 

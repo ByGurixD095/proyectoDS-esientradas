@@ -15,30 +15,41 @@ public class ColaEsperaController {
     @Autowired
     private ColaService colaService;
 
-    // GET
-
+    // ── Usuario: consultar posicion ───────────────────────────────────────────
     @GetMapping
-    public ResponseEntity<ColaResponse> position(
+    public ResponseEntity<ColaResponse> consultarPosicion(
             @PathVariable Long espectaculoId,
             @RequestHeader("X-User-Email") String correoUsuario) {
-        return ResponseEntity.ok(this.colaService.consultarPosicion(espectaculoId, correoUsuario));
+        return ResponseEntity.ok(colaService.consultarPosicion(espectaculoId, correoUsuario));
     }
 
-    // POST
-
+    // ── Usuario: unirse a la cola ─────────────────────────────────────────────
     @PostMapping
-    public ResponseEntity<ColaResponse> join(
+    public ResponseEntity<ColaResponse> unirse(
             @PathVariable Long espectaculoId,
             @RequestHeader("X-User-Email") String correoUsuario) {
-        return ResponseEntity.ok(this.colaService.unirse(espectaculoId, correoUsuario));
+        return ResponseEntity.ok(colaService.unirse(espectaculoId, correoUsuario));
     }
 
-    // DELETE
-
+    // ── Usuario: abandonar la cola ────────────────────────────────────────────
     @DeleteMapping
-    public ResponseEntity<ColaResponse> leave(
+    public ResponseEntity<ColaResponse> abandonar(
             @PathVariable Long espectaculoId,
             @RequestHeader("X-User-Email") String correoUsuario) {
-        return ResponseEntity.ok(this.colaService.abandonar(espectaculoId, correoUsuario));
+        return ResponseEntity.ok(colaService.abandonar(espectaculoId, correoUsuario));
+    }
+
+    // ── Admin: activar cola ───────────────────────────────────────────────────
+    @PostMapping("/activar")
+    public ResponseEntity<Void> activar(@PathVariable Long espectaculoId) {
+        colaService.activarCola(espectaculoId);
+        return ResponseEntity.ok().build();
+    }
+
+    // ── Admin: desactivar cola ────────────────────────────────────────────────
+    @DeleteMapping("/activar")
+    public ResponseEntity<Void> desactivar(@PathVariable Long espectaculoId) {
+        colaService.desactivarCola(espectaculoId);
+        return ResponseEntity.ok().build();
     }
 }
