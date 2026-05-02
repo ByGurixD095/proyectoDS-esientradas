@@ -25,6 +25,10 @@ public class CompraService {
     @Autowired
     UserService userService;
 
+    public String getEmailFromToken(String token) {
+        return userService.validarTokenYObtenerCorreo(token);
+    }
+
     public CompraResponse crearPaymentIntent(Long precioCentimos, String tokenPrerreserva, String tokenUsuario) {
         Stripe.apiKey = _key;
 

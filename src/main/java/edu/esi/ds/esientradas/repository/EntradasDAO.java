@@ -36,4 +36,6 @@ public interface EntradasDAO extends JpaRepository<Entrada, Long> {
             "SUM(CASE WHEN e.estado = edu.esi.ds.esientradas.model.Estado.VENDIDA THEN 1L ELSE 0L END)) " +
             "FROM Entrada e WHERE e.espectaculo.id = :id")
     DtoEntradaInfo getInfoEntrada(@Param("id") Long id);
+
+    List<Entrada> findByCorreoCompradorAndEstado(String email, Estado vendida);
 }

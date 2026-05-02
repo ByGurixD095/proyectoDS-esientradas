@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import edu.esi.ds.esientradas.dto.DtoEntrada;
+import edu.esi.ds.esientradas.dto.DtoEntradaComprada;
 import edu.esi.ds.esientradas.dto.DtoEntradaDeZona;
 import edu.esi.ds.esientradas.dto.DtoEntradaInfo;
 import edu.esi.ds.esientradas.dto.DtoEntradaPrecisa;
@@ -146,6 +147,14 @@ public class EntradaService {
         correoService.enviarEntradas(email, entradas);
     }
 
+    @Transactional(readOnly = true)
+    public List<DtoEntradaComprada> getEntradasCompradasByEmail(String email) {
+        return dao.findByCorreoCompradorAndEstado(email, Estado.VENDIDA)
+                .stream()
+                .map(this::toDtoComprada)
+                .toList();
+    }
+
     // ── HELPERS ────────────────────────────────────────────────────────────────
 
     private String validarTokenVigente(String token) {
@@ -189,5 +198,28 @@ public class EntradaService {
                     precisa.getFila(), precisa.getColumna(), precisa.getPlanta());
         }
         throw new IllegalStateException("Tipo desconocido");
+    }
+
+    private DtoEntradaComprada toDtoComprada(Entrada e) {
+        BigDecimal precio = e.getPrecio() != null ? BigDecimal.valueOf(e.getPrecio(), 2) : null;
+        Integer planta = null, fila = null, columna = null, zona = null;
+
+        if (e instanceof Precisa p) {
+            planta = p.getPlanta();
+            fila = p.getFila();
+            columna = p.getColumna();
+        } else if (e instanceof DeZona dz) {
+            zona = dz.getZona();
+        }
+
+        return new DtoEntradaComprada(
+                e.getId(),
+                e instanceof Precisa ? "PRECISA" : "ZONA",
+                precio,
+                e.getEspectaculo().getId(),
+                e.getEspectaculo().getArtista(),
+                e.getEspectaculo().getFecha(),
+                e.getEspectaculo().getEscenario().getNombre(),
+                planta, fila, columna, zona);
     }
 }

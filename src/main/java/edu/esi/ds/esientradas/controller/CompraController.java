@@ -1,10 +1,14 @@
 package edu.esi.ds.esientradas.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -12,6 +16,8 @@ import org.springframework.web.server.ResponseStatusException;
 import edu.esi.ds.esientradas.dto.CompraRequest;
 import edu.esi.ds.esientradas.dto.CompraResponse;
 import edu.esi.ds.esientradas.dto.ConfirmRequest;
+import edu.esi.ds.esientradas.dto.DtoEntradaComprada;
+import edu.esi.ds.esientradas.service.EntradaService;
 import edu.esi.ds.esientradas.service.CompraService;
 import org.springframework.web.bind.annotation.PostMapping;
 
@@ -22,6 +28,18 @@ public class CompraController {
 
     @Autowired
     CompraService service;
+
+    @Autowired
+    EntradaService entradaService;
+
+    // GET
+    @GetMapping("/mis-entradas")
+    public ResponseEntity<List<DtoEntradaComprada>> misEntradas(
+            @RequestHeader("Authorization") String authHeader) {
+        String token = authHeader.replace("Bearer ", "");
+        String email = service.getEmailFromToken(token);
+        return ResponseEntity.ok(entradaService.getEntradasCompradasByEmail(email));
+    }
 
     // POST
 
