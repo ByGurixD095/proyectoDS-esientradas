@@ -3,160 +3,123 @@ package edu.esi.ds.esientradas.service;
 import edu.esi.ds.esientradas.model.DeZona;
 import edu.esi.ds.esientradas.model.Entrada;
 import edu.esi.ds.esientradas.model.Precisa;
-import jakarta.activation.DataHandler;
-import jakarta.mail.*;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeBodyPart;
-import jakarta.mail.internet.MimeMessage;
-import jakarta.mail.internet.MimeMultipart;
-import jakarta.mail.util.ByteArrayDataSource;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.common.BitMatrix;
-import com.google.zxing.qrcode.QRCodeWriter;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 @Service
 public class CorreoService {
 
-    @Value("${correo.username}")
-    private String username;
+    @Autowired
+    private GmailService emailSender;
 
-    @Value("${correo.password}")
-    private String appPassword;
+    @Autowired
+    private QRService qrService;
 
     public void enviarEntradas(String correo, List<Entrada> entradas) {
-        try {
-            // Generamos los bytes de cada QR en orden
-            List<byte[]> qrImages = new ArrayList<>();
-            for (Entrada e : entradas) {
-                qrImages.add(generarQRBytes("ENTRADA_ID:" + e.getId()));
-            }
-
-            String html = construirContenido(entradas);
-            sendHtmlEmail(correo, "Tus entradas de ESIEntradas", html, qrImages);
-            System.out.println("Correo enviado correctamente a " + correo);
-
-        } catch (Exception e) {
-            System.err.println("Error al enviar correo a " + correo + ": " + e.getMessage());
-        }
+        List<byte[]> qrImages = generarQRs(entradas);
+        String html = construirHtml(entradas);
+        emailSender.enviar(correo, "Tus entradas de ESIEntradas", html, qrImages);
     }
 
-    private void sendHtmlEmail(String to, String subject, String htmlContent,
-            List<byte[]> qrImages) throws MessagingException {
-        Properties props = new Properties();
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.smtp.host", "smtp.gmail.com");
-        props.put("mail.smtp.port", "587");
-        props.put("mail.smtp.connectiontimeout", "10000");
-        props.put("mail.smtp.timeout", "10000");
-        props.put("mail.smtp.writetimeout", "10000");
-
-        Session session = Session.getInstance(props, new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(username, appPassword);
-            }
-        });
-
-        MimeMessage message = new MimeMessage(session);
-        message.setFrom(new InternetAddress(username));
-        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
-        message.setSubject(subject, "UTF-8");
-
-        MimeMultipart multipart = new MimeMultipart("related");
-
-        // Parte HTML
-        MimeBodyPart htmlPart = new MimeBodyPart();
-        htmlPart.setContent(htmlContent, "text/html; charset=UTF-8");
-        multipart.addBodyPart(htmlPart);
-
-        // Un adjunto CID por cada QR
-        for (int i = 0; i < qrImages.size(); i++) {
-            MimeBodyPart imagePart = new MimeBodyPart();
-            imagePart.setDataHandler(
-                    new DataHandler(new ByteArrayDataSource(qrImages.get(i), "image/png")));
-            imagePart.setHeader("Content-ID", "<qr" + i + ">");
-            imagePart.setDisposition(MimeBodyPart.INLINE);
-            multipart.addBodyPart(imagePart);
+    private List<byte[]> generarQRs(List<Entrada> entradas) {
+        List<byte[]> result = new ArrayList<>();
+        for (Entrada e : entradas) {
+            String contenido = "ENTRADA_ID:" + e.getId()
+                    + "Espectáculo: " + e.getEspectaculo().getArtista();
+            result.add(qrService.generar(contenido));
         }
-
-        message.setContent(multipart);
-        Transport.send(message);
+        return result;
     }
 
-    private String construirContenido(List<Entrada> entradas) {
+    private String construirHtml(List<Entrada> entradas) {
         StringBuilder sb = new StringBuilder();
-        sb.append("<h2>¡Gracias por tu compra en ESIEntradas!</h2>");
-        sb.append("<p>Tus entradas:</p>");
+
+        sb.append("<!DOCTYPE html><html><head><meta charset='UTF-8'></head><body>");
+        sb.append("<div style='font-family:Helvetica Neue,Arial,sans-serif;max-width:600px;margin:0 auto;");
+        sb.append("background:#f5f5f7;padding:32px;border-radius:12px;'>");
+
+        sb.append("<div style='background:#000;border-radius:8px;padding:24px;margin-bottom:24px;text-align:center;'>");
+        sb.append("<h1 style='color:#fff;font-size:24px;margin:0;'>esi<strong>entradas</strong></h1>");
+        sb.append("</div>");
+
+        sb.append("<h2 style='color:#1d1d1f;font-size:20px;margin:0 0 8px;'>Gracias por tu compra</h2>");
+        sb.append("<p style='color:#6e6e73;font-size:15px;margin:0 0 24px;'>Aqui tienes tus entradas:</p>");
 
         for (int i = 0; i < entradas.size(); i++) {
-            Entrada e = entradas.get(i);
-
-            sb.append("<div style='border:1px solid #ccc;padding:15px;margin-bottom:20px;'>");
-            sb.append("<p><b>Espectáculo:</b> ").append(e.getEspectaculo().getArtista()).append("</p>");
-            sb.append("<p><b>Fecha:</b> ").append(e.getEspectaculo().getFecha()).append("</p>");
-            sb.append("<p><b>Recinto:</b> ").append(e.getEspectaculo().getEscenario().getNombre()).append("</p>");
-            sb.append("<p><b>Precio:</b> ").append(formatPrecio(e.getPrecio())).append("</p>");
-
-            if (e instanceof Precisa p) {
-                sb.append("<p><b>Planta:</b> ").append(p.getPlanta()).append("</p>");
-                sb.append("<p><b>Fila:</b> ").append(p.getFila()).append("</p>");
-                sb.append("<p><b>Butaca:</b> ").append(p.getColumna()).append("</p>");
-            } else if (e instanceof DeZona dz) {
-                sb.append("<p><b>Zona:</b> ").append(dz.getZona()).append("</p>");
-            }
-
-            // Referencia al CID del QR adjunto
-            sb.append("<div style='text-align:center;margin-top:10px;'>");
-            sb.append("<img src='cid:qr").append(i)
-                    .append("' width='150' height='150' alt='QR entrada'/>");
-            sb.append("<p>Escanea este código en la entrada</p>");
-            sb.append("</div>");
-
-            sb.append("</div>");
+            sb.append(construirEntradaHtml(entradas.get(i), i));
         }
 
-        sb.append("<p>Presenta este correo en la entrada. ¡Disfruta del espectáculo!</p>");
+        long total = entradas.stream()
+                .mapToLong(e -> e.getPrecio() != null ? e.getPrecio() : 0L)
+                .sum();
+
+        sb.append("<div style='background:#fff;border-radius:10px;padding:16px 20px;margin-top:8px;");
+        sb.append("border:1px solid rgba(0,0,0,0.08);'>");
+        sb.append("<span style='font-size:15px;color:#6e6e73;'>Total pagado: </span>");
+        sb.append("<span style='font-size:20px;font-weight:600;color:#1d1d1f;'>")
+                .append(formatPrecio(total)).append("</span>");
+        sb.append("</div>");
+
+        sb.append("<p style='color:#6e6e73;font-size:13px;text-align:center;margin-top:24px;'>");
+        sb.append("Presenta este correo en la entrada. Disfruta del espectaculo!</p>");
+        sb.append("</div></body></html>");
+
         return sb.toString();
     }
 
-    // Ahora devuelve bytes directamente, no Base64
-    private byte[] generarQRBytes(String contenido) {
-        try {
-            QRCodeWriter qrWriter = new QRCodeWriter();
-            BitMatrix matrix = qrWriter.encode(contenido, BarcodeFormat.QR_CODE, 200, 200);
+    private String construirEntradaHtml(Entrada e, int index) {
+        StringBuilder sb = new StringBuilder();
 
-            BufferedImage image = new BufferedImage(200, 200, BufferedImage.TYPE_INT_RGB);
-            for (int x = 0; x < 200; x++) {
-                for (int y = 0; y < 200; y++) {
-                    image.setRGB(x, y, matrix.get(x, y) ? 0x000000 : 0xFFFFFF);
-                }
-            }
+        sb.append("<div style='background:#fff;border-radius:10px;padding:20px;margin-bottom:12px;");
+        sb.append("border:1px solid rgba(0,0,0,0.08);'>");
 
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(image, "png", baos);
-            return baos.toByteArray();
+        sb.append("<div style='display:flex;justify-content:space-between;align-items:center;");
+        sb.append("border-bottom:1px solid rgba(0,0,0,0.06);padding-bottom:12px;margin-bottom:12px;'>");
+        sb.append("<span style='font-size:17px;font-weight:600;color:#1d1d1f;'>")
+                .append(e.getEspectaculo().getArtista()).append("</span>");
+        sb.append("<span style='font-size:17px;font-weight:600;color:#0071e3;'>")
+                .append(formatPrecio(e.getPrecio())).append("</span>");
+        sb.append("</div>");
 
-        } catch (Exception e) {
-            System.err.println("Error generando QR: " + e.getMessage());
-            return new byte[0];
+        sb.append("<table style='width:100%;border-collapse:collapse;font-size:14px;'>");
+        fila(sb, "Fecha", e.getEspectaculo().getFecha().toString().replace("T", " "));
+        fila(sb, "Recinto", e.getEspectaculo().getEscenario().getNombre());
+
+        if (e instanceof Precisa p) {
+            fila(sb, "Planta", String.valueOf(p.getPlanta()));
+            fila(sb, "Fila", String.valueOf(p.getFila()));
+            fila(sb, "Butaca", String.valueOf(p.getColumna()));
+        } else if (e instanceof DeZona dz) {
+            fila(sb, "Zona", String.valueOf(dz.getZona()));
         }
+
+        sb.append("</table>");
+
+        sb.append("<div style='text-align:center;margin-top:16px;'>");
+        sb.append("<img src='cid:img").append(index)
+                .append("' width='150' height='150' alt='QR entrada'/>");
+        sb.append("<p style='font-size:12px;color:#6e6e73;margin:4px 0 0;'>")
+                .append("Escanea este codigo en la entrada</p>");
+        sb.append("</div>");
+
+        sb.append("</div>");
+        return sb.toString();
+    }
+
+    private void fila(StringBuilder sb, String label, String valor) {
+        sb.append("<tr>")
+                .append("<td style='color:#6e6e73;padding:4px 0;width:80px;'>").append(label).append("</td>")
+                .append("<td style='color:#1d1d1f;padding:4px 0;font-weight:500;'>").append(valor).append("</td>")
+                .append("</tr>");
     }
 
     private String formatPrecio(Long centimos) {
         if (centimos == null)
             return "N/D";
-        return String.format("%.2f €", centimos / 100.0);
+        return String.format("%.2f EUR", centimos / 100.0);
     }
 }
