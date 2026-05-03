@@ -109,7 +109,7 @@ public class CorreoService {
         sb.append("</div>");
         return sb.toString();
     }
-    
+
     private void fila(StringBuilder sb, String label, String valor) {
         sb.append("<tr>")
                 .append("<td style='color:#6e6e73;padding:4px 0;width:80px;'>").append(label).append("</td>")

@@ -53,6 +53,7 @@ public class EspectaculoService {
                 e.getId(),
                 e.getArtista(),
                 e.getFecha(),
-                e.getEscenario().getNombre());
+                e.getEscenario().getNombre(),
+                e.isColaActiva());
     }
 }
