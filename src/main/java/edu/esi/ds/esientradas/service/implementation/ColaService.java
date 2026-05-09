@@ -152,9 +152,6 @@ public class ColaService implements IColaService {
                 for (ColaVirtual c : expirados) {
                         c.setEstado(EstadoCola.EXPIRADO);
                         colaDAO.save(c);
-                        System.out.println("[ColaService] Turno expirado para: " + c.getCorreoUsuario()
-                                        + " en espectaculo " + c.getEspectaculo().getId());
-                        // Activar siguiente para cada espectaculo afectado
                         _activarSiguienteSiLibre(c.getEspectaculo().getId());
                 }
         }
@@ -181,9 +178,6 @@ public class ColaService implements IColaService {
                 siguiente.setEstado(EstadoCola.ACTIVO);
                 siguiente.setTurnoActivadoEn(LocalDateTime.now());
                 colaDAO.save(siguiente);
-
-                System.out.println("[ColaService] Turno activado para: " + siguiente.getCorreoUsuario()
-                                + " (pos " + siguiente.getPosicion() + ") en espectaculo " + espectaculoId);
         }
 
         private ColaResponse toDto(ColaVirtual c, Long espectaculoId) {
@@ -198,8 +192,6 @@ public class ColaService implements IColaService {
                                                 espectaculoId, EstadoCola.ESPERANDO, c.getPosicion())
                                 : 0;
 
-                // Si hay alguien ACTIVO y este usuario esta ESPERANDO, sumamos 1 (el activo
-                // esta delante)
                 if (c.getEstado() == EstadoCola.ESPERANDO) {
                         boolean hayActivo = colaDAO
                                         .findByEspectaculoIdAndEstado(espectaculoId, EstadoCola.ACTIVO)
