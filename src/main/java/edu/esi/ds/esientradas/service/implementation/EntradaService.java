@@ -23,9 +23,10 @@ import edu.esi.ds.esientradas.model.Entrada;
 import edu.esi.ds.esientradas.model.Estado;
 import edu.esi.ds.esientradas.model.Precisa;
 import edu.esi.ds.esientradas.repository.EntradasDAO;
+import edu.esi.ds.esientradas.service.IEntradaService;
 
 @Service
-public class EntradaService {
+public class EntradaService implements IEntradaService {
 
     private static final int TTL_MINUTOS = 10;
 

@@ -8,12 +8,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import edu.esi.ds.esientradas.repository.EspectaculoDAO;
+import edu.esi.ds.esientradas.service.IEspectaculoService;
 import edu.esi.ds.esientradas.dto.DtoEspectaculo;
 import edu.esi.ds.esientradas.model.Espectaculo;
 
 @Service
 @Transactional(readOnly = true)
-public class EspectaculoService {
+public class EspectaculoService implements IEspectaculoService {
 
     private final EspectaculoDAO dao;
 

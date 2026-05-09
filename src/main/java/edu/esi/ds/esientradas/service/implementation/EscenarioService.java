@@ -8,10 +8,11 @@ import org.springframework.transaction.annotation.Transactional;
 import edu.esi.ds.esientradas.dto.DtoEscenario;
 import edu.esi.ds.esientradas.model.Escenario;
 import edu.esi.ds.esientradas.repository.EscenarioDAO;
+import edu.esi.ds.esientradas.service.IEscenarioService;
 
 @Service
 @Transactional(readOnly = true)
-public class EscenarioService {
+public class EscenarioService implements IEscenarioService {
 
     private final EscenarioDAO dao;
 

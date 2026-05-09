@@ -6,6 +6,7 @@ import edu.esi.ds.esientradas.model.EstadoCola;
 import edu.esi.ds.esientradas.model.Espectaculo;
 import edu.esi.ds.esientradas.repository.ColaVirtualDAO;
 import edu.esi.ds.esientradas.repository.EspectaculoDAO;
+import edu.esi.ds.esientradas.service.IColaService;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class ColaService {
+public class ColaService implements IColaService {
         private static final int MINUTOS_TURNO = 5;
 
         private final ColaVirtualDAO colaDAO;
