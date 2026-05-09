@@ -6,12 +6,10 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import edu.esi.ds.esientradas.dto.ColaResponse;
 import edu.esi.ds.esientradas.dto.DtoEntrada;
 import edu.esi.ds.esientradas.dto.DtoEntradaComprada;
 import edu.esi.ds.esientradas.dto.DtoEntradaDeZona;
@@ -24,6 +22,7 @@ import edu.esi.ds.esientradas.model.Estado;
 import edu.esi.ds.esientradas.model.Precisa;
 import edu.esi.ds.esientradas.repository.EntradasDAO;
 import edu.esi.ds.esientradas.service.IEntradaService;
+import edu.esi.ds.esientradas.service.IUsuarioService;
 
 @Service
 public class EntradaService implements IEntradaService {
@@ -31,16 +30,11 @@ public class EntradaService implements IEntradaService {
     private static final int TTL_MINUTOS = 10;
 
     private final EntradasDAO dao;
-    private final UserService usuariosClient;
-    private final CorreoService correoService;
-    private final ColaService colaService;
+    private final IUsuarioService usuariosClient;
 
-    public EntradaService(EntradasDAO dao, UserService usuariosClient, CorreoService correoService,
-            ColaService colaService) {
+    public EntradaService(EntradasDAO dao, IUsuarioService usuariosClient) {
         this.dao = dao;
         this.usuariosClient = usuariosClient;
-        this.correoService = correoService;
-        this.colaService = colaService;
     }
 
     // ── CONSULTAS ──────────────────────────────────────────────────────────────
@@ -102,7 +96,6 @@ public class EntradaService implements IEntradaService {
         dao.save(entrada);
     }
 
-    @Scheduled(fixedDelay = 60000)
     @Transactional
     public void liberarEntradasCaducadas() {
         List<Entrada> caducadas = dao.findByEstadoAndFechaPrerreservaBefore(
@@ -136,43 +129,25 @@ public class EntradaService implements IEntradaService {
         return email;
     }
 
-    @Transactional
-    public void confirmarCompra(String tokenPrerreserva, String email) {
+    @Transactional(readOnly = true)
+    public List<Entrada> obtenerReservadasPorToken(String tokenPrerreserva) {
         List<Entrada> entradas = dao.findByTokenPrerreserva(tokenPrerreserva);
         if (entradas.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No hay entradas con ese token.");
         }
+        return entradas;
+    }
 
-        if (entradas.get(0).getEstado() == Estado.VENDIDA) {
-            return;
-        }
-
-        Long espectaculoId = entradas.get(0).getEspectaculo().getId();
-        boolean colaActiva = entradas.get(0).getEspectaculo().isColaActiva();
-
-        if (colaActiva) {
-            ColaResponse posicion;
-            try {
-                posicion = colaService.consultarPosicion(espectaculoId, email);
-            } catch (Exception e) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "Debes unirte a la cola para este espectaculo.");
-            }
-
-            if (!posicion.esTuTurno()) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                        "Aun no es tu turno. Posicion en cola: " + posicion.posicion());
-            }
+    @Transactional
+    public List<Entrada> consolidarVenta(String tokenPrerreserva, String email) {
+        List<Entrada> entradas = dao.findByTokenPrerreserva(tokenPrerreserva);
+        if (entradas.isEmpty() || entradas.get(0).getEstado() == Estado.VENDIDA) {
+            return entradas; // Evita doble procesamiento
         }
 
         entradas.forEach(e -> marcarComoVendida(e, email));
         dao.saveAll(entradas);
-
-        if (colaActiva) {
-            colaService.marcarCompletado(espectaculoId, email);
-        }
-
-        correoService.enviarEntradas(email, entradas);
+        return entradas;
     }
 
     @Transactional(readOnly = true)

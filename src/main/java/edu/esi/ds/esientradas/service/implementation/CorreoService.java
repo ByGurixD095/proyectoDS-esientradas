@@ -31,10 +31,4 @@ public class CorreoService implements ICorreoService {
                 .map(e -> qrService.generar("ENTRADA_ID:" + e.getId()))
                 .toList();
     }
-
-    @Override
-    public void enviar(String to, String subject, String htmlContent, List<byte[]> imagenes) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'enviar'");
-    }
 }
