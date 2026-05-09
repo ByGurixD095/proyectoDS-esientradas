@@ -1,6 +1,8 @@
 package edu.esi.ds.esientradas.service.implementation;
 
 import java.util.List;
+
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -15,7 +17,6 @@ import edu.esi.ds.esientradas.service.ICorreoService;
 import edu.esi.ds.esientradas.service.IEntradaService;
 import edu.esi.ds.esientradas.service.IPasarelaPago;
 import edu.esi.ds.esientradas.service.IUsuarioService;
-import jakarta.transaction.Transactional;
 
 @Service
 public class CompraService implements ICompraService {

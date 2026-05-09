@@ -9,7 +9,6 @@ import edu.esi.ds.esientradas.repository.EspectaculoDAO;
 import edu.esi.ds.esientradas.service.IColaService;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -142,10 +141,6 @@ public class ColaService implements IColaService {
                 espectaculoDAO.save(esp);
         }
 
-        // ── JOB: expirar turnos que superaron el tiempo limite ───────────────────
-        // Corre cada 30 segundos
-
-        @Scheduled(fixedDelay = 30000)
         @Transactional
         public void expirarTurnosVencidos() {
                 LocalDateTime limite = LocalDateTime.now().minusMinutes(MINUTOS_TURNO);
