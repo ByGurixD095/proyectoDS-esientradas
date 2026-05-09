@@ -1,11 +1,10 @@
-package edu.esi.ds.esientradas.service;
+package edu.esi.ds.esientradas.service.implementation;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -30,17 +29,18 @@ public class EntradaService {
 
     private static final int TTL_MINUTOS = 10;
 
-    @Autowired
-    EntradasDAO dao;
+    private final EntradasDAO dao;
+    private final UserService usuariosClient;
+    private final CorreoService correoService;
+    private final ColaService colaService;
 
-    @Autowired
-    UserService usuariosClient;
-
-    @Autowired
-    CorreoService correoService;
-
-    @Autowired
-    ColaService colaService;
+    public EntradaService(EntradasDAO dao, UserService usuariosClient, CorreoService correoService,
+            ColaService colaService) {
+        this.dao = dao;
+        this.usuariosClient = usuariosClient;
+        this.correoService = correoService;
+        this.colaService = colaService;
+    }
 
     // ── CONSULTAS ──────────────────────────────────────────────────────────────
 

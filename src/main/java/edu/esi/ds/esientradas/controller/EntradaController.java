@@ -2,7 +2,6 @@ package edu.esi.ds.esientradas.controller;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -18,15 +17,18 @@ import org.springframework.web.server.ResponseStatusException;
 import edu.esi.ds.esientradas.dto.DtoEntrada;
 import edu.esi.ds.esientradas.dto.DtoEntradaInfo;
 import edu.esi.ds.esientradas.dto.ReservaResponse;
-import edu.esi.ds.esientradas.service.EntradaService;
+import edu.esi.ds.esientradas.service.IEntradaService;
 
 @RestController
 @RequestMapping("/espectaculos/{espectaculoId}/entradas")
 @CrossOrigin(origins = "*")
 public class EntradaController {
 
-    @Autowired
-    EntradaService service;
+    private final IEntradaService service;
+
+    public EntradaController(IEntradaService service) {
+        this.service = service;
+    }
 
     // GET
 

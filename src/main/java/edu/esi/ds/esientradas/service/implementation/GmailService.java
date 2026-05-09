@@ -1,4 +1,4 @@
-package edu.esi.ds.esientradas.service;
+package edu.esi.ds.esientradas.service.implementation;
 
 import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;

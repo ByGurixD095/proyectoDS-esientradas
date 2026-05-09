@@ -1,6 +1,5 @@
-package edu.esi.ds.esientradas.service;
+package edu.esi.ds.esientradas.service.implementation;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,11 +18,13 @@ public class CompraService {
     @Value("${stripe.api-key}")
     private String _key;
 
-    @Autowired
-    EntradaService entradaService;
+    private final EntradaService entradaService;
+    private final UserService userService;
 
-    @Autowired
-    UserService userService;
+    public CompraService(EntradaService entradaService, UserService userService) {
+        this.entradaService = entradaService;
+        this.userService = userService;
+    }
 
     public String getEmailFromToken(String token) {
         return userService.validarTokenYObtenerCorreo(token);

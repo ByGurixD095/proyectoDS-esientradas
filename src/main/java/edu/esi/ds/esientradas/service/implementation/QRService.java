@@ -1,4 +1,4 @@
-package edu.esi.ds.esientradas.service;
+package edu.esi.ds.esientradas.service.implementation;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;

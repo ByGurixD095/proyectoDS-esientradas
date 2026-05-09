@@ -1,10 +1,9 @@
-package edu.esi.ds.esientradas.service;
+package edu.esi.ds.esientradas.service.implementation;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,8 +15,11 @@ import edu.esi.ds.esientradas.model.Espectaculo;
 @Transactional(readOnly = true)
 public class EspectaculoService {
 
-    @Autowired
-    private EspectaculoDAO dao;
+    private final EspectaculoDAO dao;
+
+    public EspectaculoService(EspectaculoDAO dao) {
+        this.dao = dao;
+    }
 
     public DtoEspectaculo getEspectaculoById(Long id) {
         return dao.findById(id).map(this::toDto).orElse(null);

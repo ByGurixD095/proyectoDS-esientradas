@@ -3,7 +3,6 @@ package edu.esi.ds.esientradas.controller;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -15,15 +14,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import edu.esi.ds.esientradas.dto.DtoEspectaculo;
-import edu.esi.ds.esientradas.service.EspectaculoService;
+import edu.esi.ds.esientradas.service.IEspectaculoService;
 
 @RestController
 @RequestMapping("/espectaculos")
 @CrossOrigin(origins = "*")
 public class EspectaculoController {
+    private final IEspectaculoService service;
 
-    @Autowired
-    EspectaculoService service;
+    public EspectaculoController(IEspectaculoService service) {
+        this.service = service;
+    }
 
     // GET
 

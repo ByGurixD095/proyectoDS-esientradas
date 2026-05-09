@@ -1,4 +1,4 @@
-package edu.esi.ds.esientradas.service;
+package edu.esi.ds.esientradas.service.implementation;
 
 import edu.esi.ds.esientradas.dto.ColaResponse;
 import edu.esi.ds.esientradas.model.ColaVirtual;
@@ -7,7 +7,6 @@ import edu.esi.ds.esientradas.model.Espectaculo;
 import edu.esi.ds.esientradas.repository.ColaVirtualDAO;
 import edu.esi.ds.esientradas.repository.EspectaculoDAO;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -20,15 +19,15 @@ import java.util.Optional;
 
 @Service
 public class ColaService {
-
-        // Minutos que tiene el usuario para completar la compra cuando es su turno
         private static final int MINUTOS_TURNO = 5;
 
-        @Autowired
-        private ColaVirtualDAO colaDAO;
+        private final ColaVirtualDAO colaDAO;
+        private final EspectaculoDAO espectaculoDAO;
 
-        @Autowired
-        private EspectaculoDAO espectaculoDAO;
+        public ColaService(ColaVirtualDAO colaDAO, EspectaculoDAO espectaculoDAO) {
+                this.colaDAO = colaDAO;
+                this.espectaculoDAO = espectaculoDAO;
+        }
 
         // ── UNIRSE A LA COLA ──────────────────────────────────────────────────────
 
