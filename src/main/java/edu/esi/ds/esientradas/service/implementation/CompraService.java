@@ -49,6 +49,28 @@ public class CompraService implements ICompraService {
             throw new IllegalArgumentException("Token de usuario inválido.");
         }
 
+        List<Entrada> entradas = entradaService.obtenerReservadasPorToken(tokenPrerreserva);
+        if (entradas.isEmpty()) {
+            throw new IllegalArgumentException("No hay entradas prerreservadas con ese token.");
+        }
+
+        boolean colaActiva = entradas.get(0).getEspectaculo().isColaActiva();
+        if (colaActiva) {
+            Long espectaculoId = entradas.get(0).getEspectaculo().getId();
+            try {
+                ColaResponse posicion = colaService.consultarPosicion(espectaculoId, email);
+                if (!posicion.esTuTurno()) {
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                            "Aún no es tu turno en la cola. Posición: " + posicion.posicion());
+                }
+            } catch (ResponseStatusException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Debes unirte a la cola para este espectáculo.");
+            }
+        }
+
         String clientSecret = pasarelaPago.crearIntencionPago(precioCentimos, tokenPrerreserva, email);
         return new CompraResponse(clientSecret, email);
     }
