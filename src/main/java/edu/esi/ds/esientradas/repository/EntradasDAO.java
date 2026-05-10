@@ -25,6 +25,9 @@ public interface EntradasDAO extends JpaRepository<Entrada, Long> {
 
     List<Entrada> findByTokenPrerreserva(String token);
 
+    @Query("SELECT e FROM Entrada e JOIN FETCH e.espectaculo WHERE e.tokenPrerreserva = :token")
+    List<Entrada> findByTokenPrerreservaWithEspectaculo(@Param("token") String token);
+
     List<Entrada> findByEstadoAndFechaPrerreservaBefore(Estado estado, LocalDateTime fecha);
 
     int countByEspectaculoIdAndEstado(Long espectaculoId, Estado disponible);

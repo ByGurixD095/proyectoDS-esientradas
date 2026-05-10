@@ -4,6 +4,8 @@ import com.google.zxing.BarcodeFormat;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.QRCodeWriter;
 
+import edu.esi.ds.esientradas.service.IQrService;
+
 import org.springframework.stereotype.Service;
 
 import javax.imageio.ImageIO;
@@ -11,7 +13,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 
 @Service
-public class QRService {
+public class QRService implements IQrService {
 
     private static final int SIZE = 200;
 

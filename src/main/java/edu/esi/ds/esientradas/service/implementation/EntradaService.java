@@ -131,7 +131,7 @@ public class EntradaService implements IEntradaService {
 
     @Transactional(readOnly = true)
     public List<Entrada> obtenerReservadasPorToken(String tokenPrerreserva) {
-        List<Entrada> entradas = dao.findByTokenPrerreserva(tokenPrerreserva);
+        List<Entrada> entradas = dao.findByTokenPrerreservaWithEspectaculo(tokenPrerreserva);
         if (entradas.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No hay entradas con ese token.");
         }
